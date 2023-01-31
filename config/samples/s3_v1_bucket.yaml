@@ -1,0 +1,15 @@
+apiVersion: s3.s3gw.io/v1
+kind: Bucket
+metadata:
+  labels:
+    app.kubernetes.io/name: bucket
+    app.kubernetes.io/instance: bucket-sample
+    app.kubernetes.io/part-of: s3gw-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: s3gw-operator
+  name: bucket-sample
+spec:
+  name: bucket-sample
+  userAccessKey: test
+  userSecretKey: test
+  versioned: false
