@@ -15,7 +15,20 @@ spec:
     singular: bucket
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - description: Bucket Status
+      jsonPath: .status.status
+      name: Status
+      type: string
+    - description: Object Locking
+      jsonPath: .spec.objectLocking
+      name: Object-Locking
+      type: string
+    - description: Creation-Time
+      jsonPath: .metadata.creationTimestamp
+      name: Creation-Time
+      type: string
+    name: v1
     schema:
       openAPIV3Schema:
         description: Bucket is the Schema for the buckets API

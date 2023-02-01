@@ -10,4 +10,4 @@ metadata:
   name: bucket-sample
 spec:
   name: bucket-sample
-  objectLocking: false
+  objectLocking: true

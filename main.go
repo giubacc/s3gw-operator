@@ -95,9 +95,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	DebugLogger.Tracef("AccessKeyID:%s", AccessKeyID)
-	DebugLogger.Tracef("SecretAccessKey:%s", SecretAccessKey)
-	DebugLogger.Tracef("Endpoint:%s", Endpoint)
+	DebugLogger.Tracef("-- access-key:%s", AccessKeyID)
+	DebugLogger.Tracef("-- secret-key:%s", SecretAccessKey)
+	DebugLogger.Tracef("-- endpoint:%s", Endpoint)
 
 	{
 		var err error

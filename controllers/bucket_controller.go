@@ -59,12 +59,14 @@ func (r *BucketReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		//This is a cancellation.
 		//Cancellations should be handled with a finalizer like in
 		//Kubewarden: https://github.com/kubewarden/kubewarden-controller
+		DebugLogger.Tracef("deleting bucket:%s", req.Name)
 		bucket.Name = req.Name
 		if err := S3Manager.EnsureBucketDeleted(ctx, &bucket); err != nil {
 			log.Error(err, "unable to delete bucket")
 			return ctrl.Result{}, err
 		}
 	} else {
+		DebugLogger.Tracef("ensuring bucket:%s", req.Name)
 		if err := S3Manager.EnsureBucketCreated(ctx, &bucket); err != nil {
 			log.Error(err, "unable to ensure bucket")
 			bucket.Status.Status = s3v1.Error
