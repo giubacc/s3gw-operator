@@ -1,10 +1,13 @@
 # s3gw-operator
 
-// TODO(user): Add simple overview of use/purpose
+This is a demo of a Kubernetes operator for s3gw to provision buckets.
+
+More information on Kubebuilder framework can be found via the
+[Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
 
 ## Description
 
-// TODO(user): An in-depth paragraph about your project and overview of use
+You can create S3 buckets using the CRD: Bucket
 
 ## Getting Started
 
@@ -17,19 +20,19 @@ context in your kubeconfig file
 
 ### Running on the cluster
 
-1. Install Instances of Custom Resources:
+- Install Instances of Custom Resources:
 
 ```sh
 kubectl apply -f config/samples/
 ```
 
-2. Build and push your image to the location specified by `IMG`:
+- Build and push your image to the location specified by `IMG`:
 
 ```sh
 make docker-build docker-push IMG=<some-registry>/s3gw-operator:tag
 ```
 
-3. Deploy the controller to the cluster with the image specified by `IMG`:
+- Deploy the controller to the cluster with the image specified by `IMG`:
 
 ```sh
 make deploy IMG=<some-registry>/s3gw-operator:tag
@@ -51,11 +54,6 @@ UnDeploy the controller from the cluster:
 make undeploy
 ```
 
-## Contributing
-
-// TODO(user): Add detailed information on how you would like
-others to contribute to this project
-
 ### How it works
 
 This project aims to follow the Kubernetes
@@ -68,13 +66,13 @@ until the desired state is reached on the cluster.
 
 ### Test It Out
 
-1. Install the CRDs into the cluster:
+- Install the CRDs into the cluster:
 
 ```sh
 make install
 ```
 
-2. Run your controller (this will run in the foreground, so switch
+- Run your controller (this will run in the foreground, so switch
 to a new terminal if you want to leave it running):
 
 ```sh
@@ -93,6 +91,3 @@ make manifests
 ```
 
 **NOTE:** Run `make --help` for more information on all potential `make` targets
-
-More information can be found via the
-[Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)

@@ -29,17 +29,15 @@ type BucketSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	Name          string `json:"name,omitempty"`
-	Versioned     bool   `json:"versioned,omitempty"`
-	UserAccessKey string `json:"userAccessKey,omitempty"`
-	UserSecretKey string `json:"userSecretKey,omitempty"`
+	ObjectLocking bool   `json:"objectLocking"`
 }
 
-type BStatus int
+type BStatus string
 
 const (
-	NotCreated BStatus = iota
-	Created
-	UnrecoverableError
+	NotCreated BStatus = "NotCreated"
+	Created    BStatus = "Created"
+	Error      BStatus = "Error"
 )
 
 // BucketStatus defines the observed state of Bucket

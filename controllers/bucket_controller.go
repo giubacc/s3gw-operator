@@ -27,6 +27,9 @@ import (
 	s3v1 "github.com/giubacc/s3gw-operator/api/v1"
 )
 
+// S3 manager
+var S3Manager *Manager
+
 // BucketReconciler reconciles a Bucket object
 type BucketReconciler struct {
 	client.Client
@@ -53,10 +56,22 @@ func (r *BucketReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		log.Error(err, "unable to fetch Bucket")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	} else {
-		log.Info("bucket", "Status:", bucket.Status.Status)
+		if err := S3Manager.EnsureBucketCreated(ctx, &bucket); err != nil {
+			log.Error(err, "unable to ensure bucket")
+			bucket.Status.Status = s3v1.Error
+			if err := r.Status().Update(ctx, &bucket); err != nil {
+				log.Error(err, "unable to update Bucket status")
+				return ctrl.Result{}, err
+			}
+			return ctrl.Result{}, err
+		} else {
+			bucket.Status.Status = s3v1.Created
+			if err := r.Status().Update(ctx, &bucket); err != nil {
+				log.Error(err, "unable to update Bucket status")
+				return ctrl.Result{}, err
+			}
+		}
 	}
-
-	// TODO(user): your logic here
 
 	return ctrl.Result{}, nil
 }

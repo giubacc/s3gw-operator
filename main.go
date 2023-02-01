@@ -52,11 +52,38 @@ func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
+
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
+
+	//S3 connection details
+	var AccessKeyID string
+	var SecretAccessKey string
+	var Region string
+	var Endpoint string
+
+	flag.StringVar(&AccessKeyID, "access-key", "test", "S3 Access Key")
+	flag.StringVar(&SecretAccessKey, "secret-key", "test", "S3 Secret Key")
+	flag.StringVar(&Region, "region", "", "S3 Region")
+	flag.StringVar(&Endpoint, "endpoint", "s3gw.be.127.0.0.1.omg.howdoi.website", "S3 endpoint")
+
+	connectionDetails, _ := controllers.GetS3ConnectionDetails(AccessKeyID, SecretAccessKey, Region, Endpoint, false)
+	if err := connectionDetails.ValidateS3ConnectionDetails(); err != nil {
+		setupLog.Error(err, "")
+		os.Exit(1)
+	}
+
+	{
+		var err error
+		if controllers.S3Manager, err = controllers.NewS3Manager(connectionDetails); err != nil {
+			setupLog.Error(err, "")
+			os.Exit(1)
+		}
+	}
+
 	opts := zap.Options{
 		Development: true,
 	}
