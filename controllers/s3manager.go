@@ -107,6 +107,7 @@ func GetS3ConnectionDetails(AccessKeyID string, SecretAccessKey string, Region s
 func (m *Manager) EnsureBucketCreated(ctx context.Context, bucket *s3v1.Bucket) error {
 	exists, err := m.minioClient.BucketExists(ctx, bucket.Name)
 	if err != nil {
+		DebugLogger.Errorf("BucketExists:%s", err.Error())
 		return errors.Wrapf(err, "checking bucket %s exists", bucket.Name)
 	}
 	if exists {

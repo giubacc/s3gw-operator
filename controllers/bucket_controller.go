@@ -25,7 +25,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	s3v1 "github.com/giubacc/s3gw-operator/api/v1"
+	"github.com/sirupsen/logrus"
 )
+
+var DebugLogger *logrus.Logger
 
 // S3 manager
 var S3Manager *Manager
@@ -53,8 +56,14 @@ func (r *BucketReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	log := log.FromContext(ctx)
 	var bucket s3v1.Bucket
 	if err := r.Get(ctx, req.NamespacedName, &bucket); err != nil {
-		log.Error(err, "unable to fetch Bucket")
-		return ctrl.Result{}, client.IgnoreNotFound(err)
+		//This is a cancellation.
+		//Cancellations should be handled with a finalizer like in
+		//Kubewarden: https://github.com/kubewarden/kubewarden-controller
+		bucket.Name = req.Name
+		if err := S3Manager.EnsureBucketDeleted(ctx, &bucket); err != nil {
+			log.Error(err, "unable to delete bucket")
+			return ctrl.Result{}, err
+		}
 	} else {
 		if err := S3Manager.EnsureBucketCreated(ctx, &bucket); err != nil {
 			log.Error(err, "unable to ensure bucket")

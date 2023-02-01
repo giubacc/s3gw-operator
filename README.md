@@ -1,19 +1,25 @@
 # s3gw-operator
 
-This is a demo of a Kubernetes operator for s3gw to provision buckets.
+This is a demo of a Kubernetes operator using s3gw to provision buckets.
 
 More information on Kubebuilder framework can be found via the
 [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
 
 ## Description
 
-You can create S3 buckets using the CRD: Bucket
+You can create and delete S3 buckets using the CRD: Bucket
+
+Example
+
+```sh
+kubectl apply -f bucket.yaml
+kubectl get buckets.s3.s3gw.io bucket-sample
+kubectl delete buckets.s3.s3gw.io bucket-sample
+```
 
 ## Getting Started
 
 You’ll need a Kubernetes cluster to run against.
-You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster
-for testing, or run against a remote cluster.
 **Note:** Your controller will automatically use the current
 context in your kubeconfig file
 (i.e. whatever cluster `kubectl cluster-info` shows).
@@ -32,10 +38,22 @@ kubectl apply -f config/samples/
 make docker-build docker-push IMG=<some-registry>/s3gw-operator:tag
 ```
 
+Example
+
+```sh
+make docker-build docker-push IMG=ghcr.io/giubacc/s3gw-operator:latest
+```
+
 - Deploy the controller to the cluster with the image specified by `IMG`:
 
 ```sh
 make deploy IMG=<some-registry>/s3gw-operator:tag
+```
+
+Example
+
+```sh
+make deploy IMG=ghcr.io/giubacc/s3gw-operator
 ```
 
 ### Uninstall CRDs

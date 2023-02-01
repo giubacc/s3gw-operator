@@ -33,8 +33,13 @@ import (
 
 	s3v1 "github.com/giubacc/s3gw-operator/api/v1"
 	"github.com/giubacc/s3gw-operator/controllers"
+
 	//+kubebuilder:scaffold:imports
+
+	"github.com/sirupsen/logrus"
 )
+
+var DebugLogger *logrus.Logger
 
 var (
 	scheme   = runtime.NewScheme()
@@ -42,6 +47,14 @@ var (
 )
 
 func init() {
+	DebugLogger = &logrus.Logger{
+		Formatter: new(logrus.TextFormatter),
+		Hooks:     make(logrus.LevelHooks),
+		Level:     logrus.TraceLevel,
+	}
+	DebugLogger.Out = os.Stdout
+	controllers.DebugLogger = DebugLogger
+
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(s3v1.AddToScheme(scheme))
@@ -70,11 +83,21 @@ func main() {
 	flag.StringVar(&Region, "region", "", "S3 Region")
 	flag.StringVar(&Endpoint, "endpoint", "s3gw.be.127.0.0.1.omg.howdoi.website", "S3 endpoint")
 
+	opts := zap.Options{
+		Development: true,
+	}
+	opts.BindFlags(flag.CommandLine)
+	flag.Parse()
+
 	connectionDetails, _ := controllers.GetS3ConnectionDetails(AccessKeyID, SecretAccessKey, Region, Endpoint, false)
 	if err := connectionDetails.ValidateS3ConnectionDetails(); err != nil {
 		setupLog.Error(err, "")
 		os.Exit(1)
 	}
+
+	DebugLogger.Tracef("AccessKeyID:%s", AccessKeyID)
+	DebugLogger.Tracef("SecretAccessKey:%s", SecretAccessKey)
+	DebugLogger.Tracef("Endpoint:%s", Endpoint)
 
 	{
 		var err error
@@ -83,12 +106,6 @@ func main() {
 			os.Exit(1)
 		}
 	}
-
-	opts := zap.Options{
-		Development: true,
-	}
-	opts.BindFlags(flag.CommandLine)
-	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
