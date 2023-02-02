@@ -19,10 +19,12 @@ package controllers
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	s3v1 "github.com/giubacc/s3gw-operator/api/v1"
 	"github.com/sirupsen/logrus"
@@ -45,10 +47,6 @@ type BucketReconciler struct {
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the Bucket object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.1/pkg/reconcile
@@ -56,14 +54,26 @@ func (r *BucketReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	log := log.FromContext(ctx)
 	var bucket s3v1.Bucket
 	if err := r.Get(ctx, req.NamespacedName, &bucket); err != nil {
-		//This is a cancellation.
-		//Cancellations should be handled with a finalizer like in
-		//Kubewarden: https://github.com/kubewarden/kubewarden-controller
-		DebugLogger.Tracef("deleting bucket:%s", req.Name)
-		bucket.Name = req.Name
-		if err := S3Manager.EnsureBucketDeleted(ctx, &bucket); err != nil {
-			log.Error(err, "unable to delete bucket")
-			return ctrl.Result{}, err
+		if err != nil {
+			if errors.IsNotFound(err) {
+				//This is a cancellation.
+				//Cancellations should be handled with a finalizer like in
+				//Kubewarden: https://github.com/kubewarden/kubewarden-controller
+
+				//*********************************
+				//This approach is only for demoing
+				//*********************************
+
+				DebugLogger.Tracef("deleting bucket:%s", req.Name)
+				bucket.Spec.Name = req.Name
+				if err := S3Manager.EnsureBucketDeleted(ctx, &bucket); err != nil {
+					log.Error(err, "unable to delete bucket")
+					return ctrl.Result{}, err
+				}
+			} else {
+				// Error reading the object - requeue the request.
+				return reconcile.Result{}, err
+			}
 		}
 	} else {
 		DebugLogger.Tracef("ensuring bucket:%s", req.Name)

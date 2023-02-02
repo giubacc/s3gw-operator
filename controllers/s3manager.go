@@ -28,7 +28,7 @@ import (
 )
 
 type Manager struct {
-	minioClient       *minio.Client
+	s3Client          *minio.Client
 	connectionDetails ConnectionDetails
 }
 
@@ -84,7 +84,7 @@ func NewS3Manager(connectionDetails ConnectionDetails) (*Manager, error) {
 
 	manager := &Manager{
 		connectionDetails: connectionDetails,
-		minioClient:       minioClient,
+		s3Client:          minioClient,
 	}
 
 	return manager, nil
@@ -103,30 +103,81 @@ func GetS3ConnectionDetails(AccessKeyID string, SecretAccessKey string, Region s
 	return details, nil
 }
 
-// EnsureBucketCreated creates a bucket if it's missing
+// EnsureBucketCreated creates a bucket
 func (m *Manager) EnsureBucketCreated(ctx context.Context, bucket *s3v1.Bucket) error {
-	exists, err := m.minioClient.BucketExists(ctx, bucket.Name)
+	exists, err := m.s3Client.BucketExists(ctx, bucket.Spec.Name)
 	if err != nil {
 		DebugLogger.Errorf("BucketExists:%s", err.Error())
-		return errors.Wrapf(err, "checking bucket %s exists", bucket.Name)
-	}
-	if exists {
-		return nil
+		return err
 	}
 
-	return m.minioClient.MakeBucket(ctx, bucket.Name,
-		minio.MakeBucketOptions{Region: m.connectionDetails.Region, ObjectLocking: bucket.Spec.ObjectLocking})
-}
-
-// EnsureBucketDeleted delete a bucket if it's present
-func (m *Manager) EnsureBucketDeleted(ctx context.Context, bucket *s3v1.Bucket) error {
-	exists, err := m.minioClient.BucketExists(ctx, bucket.Name)
-	if err != nil {
-		return errors.Wrapf(err, "checking bucket %s exists", bucket.Name)
+	if !exists {
+		if err := m.s3Client.MakeBucket(ctx, bucket.Spec.Name,
+			minio.MakeBucketOptions{Region: m.connectionDetails.Region, ObjectLocking: bucket.Spec.ObjectLocking}); err != nil {
+			DebugLogger.Errorf("MakeBucket:%s", err.Error())
+			return err
+		}
 	}
-	if exists {
-		return m.minioClient.RemoveBucket(ctx, bucket.Name)
+
+	if bucket.Spec.Versioning {
+		bconf, err := m.s3Client.GetBucketVersioning(ctx, bucket.Spec.Name)
+		if err != nil {
+			DebugLogger.Errorf("GetBucketVersioning:%s", err.Error())
+			return err
+		}
+		if !bconf.Enabled() {
+			if err := m.s3Client.EnableVersioning(ctx, bucket.Spec.Name); err != nil {
+				DebugLogger.Errorf("EnableVersioning:%s", err.Error())
+				return err
+			}
+		}
 	}
 
 	return nil
+}
+
+// EnsureBucketDeleted delete a bucket
+func (m *Manager) EnsureBucketDeleted(ctx context.Context, bucket *s3v1.Bucket) error {
+	var retError error = nil
+
+	exists, err := m.s3Client.BucketExists(ctx, bucket.Spec.Name)
+	if err != nil {
+		DebugLogger.Errorf("BucketExists:%s", err.Error())
+		return err
+	}
+
+	if exists {
+		objectsCh := make(chan minio.ObjectInfo)
+
+		// Send object names that are needed to be removed to objectsCh
+		go func() {
+			defer close(objectsCh)
+			// List all objects from a bucket-name with a matching prefix.
+			opts := minio.ListObjectsOptions{Prefix: "", Recursive: true}
+			for object := range m.s3Client.ListObjects(context.Background(), bucket.Spec.Name, opts) {
+				if object.Err != nil {
+					DebugLogger.Errorf("Failed to list objects, error: %s", object.Err.Error())
+				}
+				objectsCh <- object
+			}
+		}()
+
+		// Call RemoveObjects API
+		errorCh := m.s3Client.RemoveObjects(context.Background(), bucket.Spec.Name, objectsCh, minio.RemoveObjectsOptions{})
+
+		// Print errors received from RemoveObjects API
+		for e := range errorCh {
+			DebugLogger.Errorf("Failed to remove: %s, error: %s", e.ObjectName, e.Err.Error())
+			//save first error received
+			if retError != nil {
+				retError = e.Err
+			}
+		}
+
+		if retError == nil {
+			return m.s3Client.RemoveBucket(ctx, bucket.Spec.Name)
+		}
+	}
+
+	return retError
 }

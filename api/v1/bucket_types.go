@@ -27,6 +27,7 @@ type BucketSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	Name          string `json:"name,omitempty"`
+	Versioning    bool   `json:"versioning"`
 	ObjectLocking bool   `json:"objectLocking"`
 }
 
@@ -49,6 +50,7 @@ type BucketStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.status`,description="Bucket Status"
+// +kubebuilder:printcolumn:name="Object-Versioning",type=string,JSONPath=`.spec.versioning`,description="Object Versioning"
 // +kubebuilder:printcolumn:name="Object-Locking",type=string,JSONPath=`.spec.objectLocking`,description="Object Locking"
 // +kubebuilder:printcolumn:name="Creation-Time",type=string,JSONPath=`.metadata.creationTimestamp`,description="Creation-Time"
 type Bucket struct {

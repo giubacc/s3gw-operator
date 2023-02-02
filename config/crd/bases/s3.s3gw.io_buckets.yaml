@@ -20,6 +20,10 @@ spec:
       jsonPath: .status.status
       name: Status
       type: string
+    - description: Object Versioning
+      jsonPath: .spec.versioning
+      name: Object-Versioning
+      type: string
     - description: Object Locking
       jsonPath: .spec.objectLocking
       name: Object-Locking
@@ -52,8 +56,11 @@ spec:
                 type: string
               objectLocking:
                 type: boolean
+              versioning:
+                type: boolean
             required:
             - objectLocking
+            - versioning
             type: object
           status:
             description: BucketStatus defines the observed state of Bucket
