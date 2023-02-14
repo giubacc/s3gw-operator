@@ -5,6 +5,15 @@ This is a demo of a Kubernetes operator using s3gw to provision buckets.
 More information on Kubebuilder framework can be found via the
 [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
 
+This project has been initialized with:
+
+```sh
+mkdir s3gw-operator
+cd s3gw-operator
+kubebuilder init --domain s3gw.io --repo github.com/giubacc/s3gw-operator
+kubebuilder create api --group s3 --version v1 --kind Bucket
+```
+
 ## Description
 
 You can create and delete S3 buckets using the CRD: Bucket
